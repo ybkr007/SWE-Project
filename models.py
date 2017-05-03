@@ -37,19 +37,28 @@ class Detected(db.Model):
     __tablename__ = "detected"
     timestamp = db.Column('time_stamp' , db.TEXT, primary_key=True)
     cameraid = db.Column('camera_id' , db.TEXT, primary_key=True)
-    boundingbox = db.Column('bounding_box' , db.Text)
+    x = db.Column('x' , db.Float)
+    y = db.Column('y' , db.Float)
+    width = db.Column('width' , db.Float)
+    height = db.Column('height' , db.Float)
 
-    def __init__(self , timestamp ,cameraid, boundingbox):
+    def __init__(self , timestamp ,cameraid, x, y, width, height):
         self.timestamp = timestamp
         self.cameraid = cameraid
-        self.boundingbox = boundingbox
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
         
 
     def serialize(self,filepath):
         return {
             'timestamp' : self.timestamp,
             'cameraid' : self.cameraid,
-            'boundingbox' : self.boundingbox,
+            'x' : self.x,
+            'y' : self.y,
+            'width' : self.width,
+            'height' : self.height,
             'filepath' : filepath
         }
 
@@ -58,38 +67,57 @@ class Accepted(db.Model):
     __tablename__ = "accepted"
     timestamp = db.Column('time_stamp' , db.TEXT, primary_key=True)
     cameraid = db.Column('camera_id' , db.TEXT, primary_key=True)
-    boundingbox = db.Column('bounding_box' , db.Text)
+    x = db.Column('x' , db.Float)
+    y = db.Column('y' , db.Float)
+    width = db.Column('width' , db.Float)
+    height = db.Column('height' , db.Float)
 
-    def __init__(self , timestamp ,cameraid, boundingbox):
+    def __init__(self , timestamp ,cameraid, x, y, width, height):
         self.timestamp = timestamp
         self.cameraid = cameraid
-        self.boundingbox = boundingbox
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
         
 
     def serialize(self,filepath):
         return {
             'timestamp' : self.timestamp,
             'cameraid' : self.cameraid,
-            'boundingbox' : self.boundingbox,
+            'x' : self.x,
+            'y' : self.y,
+            'width' : self.width,
+            'height' : self.height,
             'filepath' : filepath
         }
+        
 ## Model class for rejected DB
 class Rejected(db.Model):
     __tablename__ = "rejected"
     timestamp = db.Column('time_stamp' , db.TEXT, primary_key=True)
     cameraid = db.Column('camera_id' , db.TEXT, primary_key=True)
-    boundingbox = db.Column('bounding_box' , db.Text)
+    x = db.Column('x' , db.Float)
+    y = db.Column('y' , db.Float)
+    width = db.Column('width' , db.Float)
+    height = db.Column('height' , db.Float)
 
-    def __init__(self , timestamp ,cameraid, boundingbox):
+    def __init__(self , timestamp ,cameraid, x, y, width, height):
         self.timestamp = timestamp
         self.cameraid = cameraid
-        self.boundingbox = boundingbox
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
         
 
     def serialize(self,filepath):
         return {
             'timestamp' : self.timestamp,
             'cameraid' : self.cameraid,
-            'boundingbox' : self.boundingbox,
+            'x' : self.x,
+            'y' : self.y,
+            'width' : self.width,
+            'height' : self.height,
             'filepath' : filepath
         }

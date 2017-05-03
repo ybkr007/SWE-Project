@@ -1,4 +1,4 @@
-from sweproject import app , db, auto
+from sweproject import app , db
 from flask_login import LoginManager
 from flask import Flask,session, request, flash, url_for, redirect, render_template, abort ,g
 from flask_login import login_user , logout_user , current_user , login_required
@@ -20,7 +20,6 @@ def load_user(id):
 
 @app.before_request
 ## Setting the logged in user
-@auto.doc()
 def before_request():
 	g.user = current_user # return username in get_id()
 
@@ -28,13 +27,11 @@ def before_request():
 
 @app.route('/')
 @login_required
-@auto.doc()
 ## Index page
 def index():
 	return redirect(url_for('home'))
 
 @app.route('/login',methods=['GET','POST'])
-@auto.doc()
 ## Function for login
 def login():
 	if g.user.is_authenticated:
@@ -52,24 +49,28 @@ def login():
 	return redirect(request.args.get('next') or url_for('home'))
 
 @app.route('/home',methods=['GET'])
-@auto.doc()
 @login_required
 ## Home page
 def home():
 	return render_template('home.html')
 
 @app.route('/logout')
-@auto.doc()
 ## Function for logout
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
 @app.route('/data.json',methods=['POST'])
-@auto.doc()
 ## Retrieve detected images
 def loadData():
-	files = Detected.query.filter_by(cameraid=request.form['cameraid']).offset(request.form['skipcount']).all();
+	files = []
+	database = request.form['database']
+	if(database == "detected"):
+		files = Detected.query.filter_by(cameraid=request.form['cameraid']).offset(request.form['skipcount']).all();
+	elif(database == "accepted"):
+		files = Accepted.query.filter_by(cameraid=request.form['cameraid']).offset(request.form['skipcount']).all();
+	elif(database == "rejected"):
+		files = Rejected.query.filter_by(cameraid=request.form['cameraid']).offset(request.form['skipcount']).all();
 	temp = []
 	for file in files:
 		temp.append(file.serialize(getPathForFile(file.timestamp)))
@@ -78,41 +79,62 @@ def loadData():
 
 ## Get file path from timestamp
 def getPathForFile(timestamp):
-	return '/images/' + random.choice(os.listdir("/Users/bharathyeddula/Desktop/backend/images/"))
+	return '/images/' + timestamp + ".jpg"
 
 @app.route('/delete',methods=['POST'])
-@auto.doc()
 ## Move the detected file to the rejected DB
 def delete():
 	timestamp = request.form['timestamp']
 	cameraid = request.form['cameraid']
-	boundingbox = request.form['boundingbox']
+	x = request.form['x']
+	y = request.form['y']
+	width = request.form['width']
+	height = request.form['height']
 
-	Detected.query.filter_by(timestamp=timestamp).filter_by(cameraid=cameraid).delete()
-	db.session.commit()
+	Detected.query.filter_by(timestamp=timestamp).filter_by(cameraid=cameraid).filter_by(x=x).filter_by(y=y).filter_by(width=width).filter_by(height=height).delete()
 
-	rejected = Rejected(timestamp,cameraid,boundingbox)
+	rejected = Rejected(timestamp,cameraid,x,y,width,height)
 	db.session.add(rejected)
 	db.session.commit()
 
 	return "ok"
 
 @app.route('/accept',methods=['POST'])
-@auto.doc()
 ## Move the detected file to the accepted DB
 def accept():
 	timestamp = request.form['timestamp']
 	cameraid = request.form['cameraid']
-	boundingbox = request.form['boundingbox']
+	x = request.form['x']
+	y = request.form['y']
+	width = request.form['width']
+	height = request.form['height']
 
-	Detected.query.filter_by(timestamp=timestamp).filter_by(cameraid=cameraid).delete()
+	Detected.query.filter_by(timestamp=timestamp).filter_by(cameraid=cameraid).filter_by(x=x).filter_by(y=y).filter_by(width=width).filter_by(height=height).delete()
 
-	accepted = Accepted(timestamp,cameraid,boundingbox)
+	accepted = Accepted(timestamp,cameraid,x,y,width,height)
 	db.session.add(accepted)
 	db.session.commit()
 
 	return "ok"
 
-@app.route('/documentation')
-def documentation():
-    return auto.html()
+@app.route('/revoke',methods=['POST'])
+## Move the detected file to the accepted DB
+def revoke():
+	timestamp = request.form['timestamp']
+	cameraid = request.form['cameraid']
+	x = request.form['x']
+	y = request.form['y']
+	width = request.form['width']
+	height = request.form['height']
+	database = request.form['database']
+
+	if(database == "accepted"):
+		Accepted.query.filter_by(timestamp=timestamp).filter_by(cameraid=cameraid).filter_by(x=x).filter_by(y=y).filter_by(width=width).filter_by(height=height).delete()
+	elif(database == "rejected"):
+		Rejected.query.filter_by(timestamp=timestamp).filter_by(cameraid=cameraid).filter_by(x=x).filter_by(y=y).filter_by(width=width).filter_by(height=height).delete()
+
+	detected = Detected(timestamp,cameraid,x,y,width,height)
+	db.session.add(detected)
+	db.session.commit()
+
+	return "ok"

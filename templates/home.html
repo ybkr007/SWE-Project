@@ -14,6 +14,11 @@
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 	
 	<style type="text/css">
+		canvas {
+		  background-color: grey; 
+		  width: 100%;
+		  height: auto;
+		}
 		body {
 		  background:#F7F7F7;
 		  color:#666666;
@@ -58,7 +63,7 @@
 
 		.right {
 			text-align: center;
-		  height:95vh;
+		  height:85vh;
 		  overflow-y: scroll;
 		  max-height:100%;
 		}
@@ -100,65 +105,63 @@
 
 	<div class="row main-content">
 
-		<div class="col-md-7 left">
+		<div class="col-md-8 left">
 			<div class="row" style="height: 20%;background-color: #ffffff;"></div>
-			<div class="row selected-image"></div>
-			<!--
 			<div class="row">
-				<div class="col-md-12">
-					<img src="../static/temp.jpg" class="img-responsive" style="margin: 0 auto;">	
+				<div class="col-md-8 col-md-offset-2">
+					<canvas id="myCanvas">
+					<!-- <img src="" class="img-responsive" id="selected-image" style="margin: 0 auto;">	 --> -->
+					</canvas>
 				</div>
+			</div>
+			<div class="row list-buttons" style="margin:10px;"> 
 				
 			</div>
-			-->
-			<!--
-			<div class="row text-center">
-				<div class="col-md-5 col-md-offset-1" style="background-color: green;">
-					<a href="" style="display: block;color: white;padding: 10px;">accept</a>
-				</div>
-				<div class="col-md-5" style="background-color: red;">
-					<a href="" style="display: block;color: white;padding: 10px;">reject</a>
+
+			<div class="row">' 
+				<div class="col-md-8 col-md-offset-2">'
+					<p class="metadata"></p>
 				</div>
 			</div>
-			-->
+			
+			
 			
 		</div>
 
-		<div class="col-md-5 text-center right">
+		<div class="col-md-3 col-md-offset-1 text-center">
 			<div class="row" style="padding: 10px;">
 				<div class="col-md-12">
-				<!-- Single button -->
-				<div class="btn-group">
-				  <button type="button" class="btn btn-default dropdown-toggle" id="camera-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-				    select a camera <span class="caret"></span>
-				  </button>
-				  <ul class="dropdown-menu">
-				    <li><a href="#" onclick='changeCamera("cam1")'>cam1</a></li>
-				  	<li><a href="#" onclick='changeCamera("cam2")'>cam2</a></li>
-				  	<li><a href="#" onclick='changeCamera("cam3")'>cam3</a></li>
-				  	<li><a href="#" onclick='changeCamera("cam4")'>cam4</a></li>
-				  </ul>
-				</div>
-				   
-				
-				</div>
-				
-			</div>
+					<div class="btn-group">
+					  <button type="button" class="btn btn-default dropdown-toggle" id="camera-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					    select a camera <span class="caret"></span>
+					  </button>
+					  <ul class="dropdown-menu">
+					    <li><a href="#" onclick='changeCamera("cam1")'>cam1</a></li>
+					  	<li><a href="#" onclick='changeCamera("cam2")'>cam2</a></li>
+					  	<li><a href="#" onclick='changeCamera("cam3")'>cam3</a></li>
+					  	<li><a href="#" onclick='changeCamera("cam4")'>cam4</a></li>
+					  </ul>
+					</div>
 
-			<div class="row thumbnails">
+					<div class="btn-group">
+					  <button type="button" class="btn btn-default dropdown-toggle" id="database-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					    select a database <span class="caret"></span>
+					  </button>
+					  <ul class="dropdown-menu">
+					    <li><a href="#" onclick='changeDatabase("detected")'>Detected</a></li>
+					  	<li><a href="#" onclick='changeDatabase("accepted")'>Accepted</a></li>
+					  	<li><a href="#" onclick='changeDatabase("rejected")'>Rejected</a></li>
+					  </ul>
+					</div>
+				</div>
+
+				
 				
 			</div>
-			<!--
-			load initial set of data and schedule a request after 15 seconds
-			-->
-			<!--
-			{% for i in range(0,10) %}
-				<p style="margin-bottom: 1px;padding: 10px;border:1px solid black;">
-					<a href="" style="display: block; width: 100%;color: black;">{{"img%d"%(i)}}</a>		
-				</p>
+			<div class="list-group row thumbnails right" style="padding-right: 10px;">
 				
-			{% endfor %}
-			-->	
+			</div>
+			
 		</div>
 		
 		
@@ -170,12 +173,52 @@
 <script type="text/javascript">
 	files = []
 	var selectedIndex;
+	var database = "detected"
+	var cameraid = "cam1"
+
+	function revoke(){
+		var selectedFile = files[selectedIndex]
+		$.ajax({
+		    url: '/revoke',
+		    method: 'POST',
+		    data: {cameraid : selectedFile.cameraid,timestamp:selectedFile.timestamp,x:selectedFile.x,y:selectedFile.y,width:selectedFile.width,height:selectedFile.height, database: database},
+		    success: function (data) {
+		        console.log(data);
+
+		        var id = selectedIndex.toString()
+		        if(document.getElementById(id) != null){
+		        	 
+			        if(document.getElementById(id).nextElementSibling != null){
+			        	var elem = document.getElementById(id).nextElementSibling;
+			        	changeImage(elem.id)
+			        }else if(document.getElementById(id).previousElementSibling != null){
+			        	//remove left side
+			        	var elem = document.getElementById(id).previousElementSibling
+			        	changeImage(elem.id)
+			        }else{
+			        	console.log("not found")
+			        	removeLeftContent()
+			        }
+			        document.getElementById(id).remove()
+		        }
+
+		    },
+		    error: function () {
+		        // Uh oh, something went wrong
+		        console.log("error")
+		    },
+		    complete: function(){
+		    	
+		    }
+			});
+	}
+
 	function deleteFile(){
 		var selectedFile = files[selectedIndex]
 		$.ajax({
 		    url: '/delete',
 		    method: 'POST',
-		    data: {cameraid : selectedFile.cameraid,timestamp:selectedFile.timestamp,boundingbox:selectedFile.boundingbox},
+		    data: {cameraid : selectedFile.cameraid,timestamp:selectedFile.timestamp,x:selectedFile.x,y:selectedFile.y,width:selectedFile.width,height:selectedFile.height},
 		    success: function (data) {
 		        console.log(data);
 
@@ -212,7 +255,7 @@
 			$.ajax({
 			    url: '/accept',
 			    method: 'POST',
-			    data: {cameraid : selectedFile.cameraid,timestamp:selectedFile.timestamp,boundingbox:selectedFile.boundingbox},
+			    data: {cameraid : selectedFile.cameraid,timestamp:selectedFile.timestamp,x:selectedFile.x,y:selectedFile.y,width:selectedFile.width,height:selectedFile.height},
 			    success: function (data) {
 			        console.log(data);
 			        var id = selectedIndex.toString()
@@ -247,9 +290,12 @@
 		}
 
 	function removeLeftContent(){
-		$('.list-buttons').detach()
-		$('.metadata').detach()
-		$('.selected-image').empty()
+		$('.list-buttons').empty()
+		$('.metadata').text("")
+		//$('#selected-image').attr('src','')
+		var canvas = document.getElementById('myCanvas')
+		var ctx = canvas.getContext('2d');
+	   	ctx.clearRect( 0, 0, canvas.width, canvas.height);
 	}
 
 	function changeImage(index) {
@@ -257,22 +303,40 @@
 		selectedIndex = index
 		var selectedFile = files[index]
 
-		removeLeftContent()
-
-		var left_content = '<div class="col-md-8 col-md-offset-2"><img src="' + "http://127.0.0.1:8000/" + selectedFile.filepath + '" class="img-responsive" style="margin: 0 auto;">	</div>'
-		var buttons = '<div class="row list-buttons" style="margin:10px;"> <a href="#" class="previous round" onclick="goToPrev()">&#8249;</a> <button style="margin:10px;" class="btn btn-success" onclick="acceptFile()">Accept</button> <button style="margin:10px;" class="btn btn-danger" onclick="deleteFile()">Reject</button> <a href="#" class="next round" onclick="goToNext()">&#8250;</a></div>'
-		var metadata = '<div class="row metadata">'+ 
-		'<div class="col-md-8 col-md-offset-2">'+
-		'<p>' + selectedFile.cameraid + ' - ' + selectedFile.timestamp +'</p>'
-		+'</div>'
-		+'</div>'
-
-		
-		$('.selected-image').append(left_content)
-		$('.left').append(buttons)
-		$('.left').append(metadata)
+		//removeLeftContent()
 		
 
+		// $('#selected-image').attr('src',"http://127.0.0.1:8000/" + selectedFile.filepath)
+		$('.metadata').text(selectedFile.cameraid + ' - ' + selectedFile.timestamp)
+		
+		
+		var img = new Image();
+		img.onload = function() {
+			console.log(this.naturalWidth)
+			console.log(this.naturalHeight)
+			$('#myCanvas').attr('width',this.naturalWidth)
+			$('#myCanvas').attr('height',this.naturalHeight)
+			
+	    	var ctx = document.getElementById('myCanvas').getContext('2d');
+	    	ctx.drawImage(img, 0, 0);
+	    	ctx.strokeStyle="red";
+	    	ctx.lineWidth="3";
+	    	
+	    	//ctx.rect(Math.floor((Math.random() * 100) + 30), Math.floor((Math.random() * 100) + 100),selectedFile.width,selectedFile.height)
+	    	ctx.rect(selectedFile.x, selectedFile.y,selectedFile.width,selectedFile.height)
+	    	ctx.stroke()
+		}
+		img.src = "http://127.0.0.1:8000/" + selectedFile.filepath;
+
+		// document.getElementById('selected-image').onload = function() {
+			
+	 //        console.log(this.clientWidth)
+		// 	console.log(this.clientHeight)
+		// 	console.log(this.naturalWidth)
+		// 	console.log(this.naturalHeight)
+        
+  // 		};
+		
 		//deleteFile()
 	}
 
@@ -305,19 +369,38 @@
 	}
 
 
-	function periodic_load(cameraid) {
+	function periodic_load() {
 		document.getElementById('camera-dropdown').innerHTML = cameraid  + '<span class="caret"></span>'
+		document.getElementById('database-dropdown').innerHTML = database  + '<span class="caret"></span>'
 		$.ajax({
 		    url: '/data.json',
 		    method: 'POST',
-		    data: {skipcount : files.length, cameraid: cameraid},
+		    data: {skipcount : files.length, cameraid: cameraid, database: database},
 		    success: function (data) {
 		        console.log(data);
+		        if(data.length != 0){
+		        	if(database == "detected"){
+		        		var buttons = 	'<a href="#" class="previous round" onclick="goToPrev()">&#8249;</a>' + 
+		        						'<button style="margin:10px;" class="btn btn-success" onclick="acceptFile()">Accept</button>'+
+		        						'<button style="margin:10px;" class="btn btn-danger" onclick="deleteFile()">Reject</button>'+
+		        					 	'<a href="#" class="next round" onclick="goToNext()">&#8250;</a>'
+		        		$('.list-buttons').empty()
+		        		$('.list-buttons').append(buttons)
+
+		        	}else{
+		        		var buttons = 	'<a href="#" class="previous round" onclick="goToPrev()">&#8249;</a>' + 
+		        						'<button style="margin:10px;" class="btn btn-danger" onclick="revoke()">Revoke</button>'+
+		        					 	'<a href="#" class="next round" onclick="goToNext()">&#8250;</a>'
+		        		$('.list-buttons').empty()
+		        		$('.list-buttons').append(buttons)
+		        	}
+		        }
 		        for(var i = 0;i < data.length;i++){
 		        	files.push(data[i])
 
 		        	var index = files.length - 1
-		        	var item = '<div class="col-md-4" id="'+ index +'"><a href="#" onclick="changeImage('+ index +')" class="thumbnail"><img style="width:100px;height:100px;" src="http://127.0.0.1:8000/'+ data[i].filepath+'" alt="..."></a></div>'
+		        	// var item = '<div class="col-md-4" id="'+ index +'"><a href="#" onclick="changeImage('+ index +')" class="thumbnail"><img style="width:100px;height:100px;" src="http://127.0.0.1:8000/'+ data[i].filepath+'" alt="..."></a></div>'
+		        	var item = '<a href="#" onclick="changeImage('+ index +')" id="'+ index + '" class="list-group-item">' + data[i].timestamp + '</a>'
 		        	/*var item = '<p style="margin-bottom: 1px;padding: 10px;border:1px solid black;" id="'+ data[i].timestamp + '"><a href="#" onclick="changeImage('+ index + ')" style="display: block; width: 100%;color: black;" class="img-link">' + data[i].filepath + '</a> </p>'
 					*/
 
@@ -341,12 +424,22 @@
 	function changeCamera(cameraid){
 		files = []
 		$('.thumbnails').empty()
-		periodic_load(cameraid)
+		removeLeftContent()
+		this.cameraid = cameraid
+		periodic_load()
+	}
+
+	function changeDatabase(database){
+		files = []
+		$('.thumbnails').empty()
+		removeLeftContent()
+		this.database = database
+		periodic_load()
 	}
 
 	$(document).ready(function() {
 	  // run the first time; all subsequent calls will take care of themselves
-	  periodic_load("cam1");
+	  periodic_load();
 	});
 
 </script>
